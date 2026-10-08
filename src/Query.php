@@ -7,7 +7,6 @@ namespace LiteTable;
 use PDO;
 use PDOException;
 use RuntimeException;
-use PDOStatement;
 
 class Query
 {
@@ -225,15 +224,6 @@ class Query
             $this->numRows = $stmt->rowCount();
 
             switch ($operation) {
-                case 'insert':
-                case 'create':
-                case 'add':
-                    return (int)$pdo->lastInsertId();
-                case 'update':
-                case 'edit':
-                case 'delete':
-                case 'remove':
-                    return true;
                 case 'one':
                 case 'find':
                     $result = $stmt->fetch();
@@ -256,21 +246,6 @@ class Query
             throw new RuntimeException("LiteTable Query Error: " . $e->getMessage(), (int)$e->getCode(), $e);
         }
     }
-
-    /**
-     * Execute an insert operation shortcut.
-     */
-    public function add(): bool { return (bool)$this->execute('add'); }
-
-    /**
-     * Execute an update operation shortcut.
-     */
-    public function edit(): bool { return (bool)$this->execute('update'); }
-
-    /**
-     * Execute a delete operation shortcut.
-     */
-    public function remove(): bool { return (bool)$this->execute('delete'); }
 
     /**
      * Fetch all results as an array of objects.
