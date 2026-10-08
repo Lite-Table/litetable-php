@@ -1,0 +1,37 @@
+# Dependencies
+/vendor/
+
+# Local Configuration & Environment
+.config.yaml
+.env
+.env.local
+*.local
+
+# IDEs & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.settings/
+.classpath
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing & Code Coverage
+/phpunit.xml
+.phpunit.result.cache
+/coverage/
+/build/
+
+# Logs & Temporary files
+*.log
+tmp/
+temp/
