@@ -1,0 +1,22 @@
+{
+    "name": "litetable/litetable",
+    "description": "Lightweight, high-performance database access for PHP using native PDO and associative arrays.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ortiz",
+            "email": "ortizaad1994@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "LiteTable\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
