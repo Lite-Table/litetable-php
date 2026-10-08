@@ -17,12 +17,18 @@ class Query
     private int $numRows = 0;
     private int $numCols = 0;
 
+    /**
+     * Initialize the query builder with a database instance.
+     */
     public function __construct(Database $db)
     {
         $this->db = $db;
         $this->reset();
     }
 
+    /**
+     * Reset query state and bindings.
+     */
     private function reset(): void
     {
         $this->queryResult = "";
@@ -30,7 +36,7 @@ class Query
     }
 
     /**
-     * Static factory method to start a query fluently (e.g., Query::table('users', $db))
+     * Static factory method to start a query fluently for a specific table.
      */
     public static function table(string $table, Database $db): self
     {
@@ -38,6 +44,9 @@ class Query
         return $instance->from($table);
     }
 
+    /**
+     * Append a SELECT clause to the query.
+     */
     public function select($fields = "*"): self
     {
         if (is_array($fields)) {
@@ -47,12 +56,18 @@ class Query
         return $this;
     }
 
+    /**
+     * Append a FROM clause to the query.
+     */
     public function from(string $table): self
     {
         $this->queryResult .= " FROM {$table} ";
         return $this;
     }
 
+    /**
+     * Append a JOIN clause to the query.
+     */
     public function join(string $table, ?string $on = null, string $type = "INNER"): self
     {
         $strOn = ($on === null) ? "" : " ON ({$on}) ";
@@ -60,16 +75,25 @@ class Query
         return $this;
     }
 
+    /**
+     * Append a LEFT JOIN clause to the query.
+     */
     public function leftJoin(string $table, ?string $on = null): self
     {
         return $this->join($table, $on, "LEFT");
     }
 
+    /**
+     * Append a RIGHT JOIN clause to the query.
+     */
     public function rightJoin(string $table, ?string $on = null): self
     {
         return $this->join($table, $on, "RIGHT");
     }
 
+    /**
+     * Append a WHERE clause with safe parameter binding.
+     */
     public function where(string $field, string $operator, $value, string $boolean = "WHERE"): self
     {
         $paramName = "w_" . count($this->bindings);
@@ -78,55 +102,104 @@ class Query
         return $this;
     }
 
+    /**
+     * Append an AND WHERE clause condition.
+     */
     public function and(string $field, string $operator, $value): self
     {
         return $this->where($field, $operator, $value, "AND");
     }
 
+    /**
+     * Append an OR WHERE clause condition.
+     */
     public function or(string $field, string $operator, $value): self
     {
         return $this->where($field, $operator, $value, "OR");
     }
 
+    /**
+     * Append an ORDER BY clause.
+     */
     public function orderBy(string $field, string $ordem = "ASC"): self
     {
         $this->queryResult .= " ORDER BY {$field} {$ordem} ";
         return $this;
     }
 
+    /**
+     * Append a GROUP BY clause.
+     */
     public function groupBy(string $field): self
     {
         $this->queryResult .= " GROUP BY {$field} ";
         return $this;
     }
 
+    /**
+     * Append a LIMIT clause.
+     */
     public function limit(int $start, int $end): self
     {
         $this->queryResult .= " LIMIT {$start}, {$end} ";
         return $this;
     }
 
+    /**
+     * Append a custom raw statement string.
+     */
     public function statement(string $stmt): self
     {
         $this->queryResult .= " {$stmt} ";
         return $this;
     }
 
+    /**
+     * Append a raw SQL fragment with optional secure bindings.
+     */
+    public function raw(string $sql, array $bindings = []): self
+    {
+        $this->queryResult .= " {$sql} ";
+        
+        foreach ($bindings as $key => $value) {
+            if (is_string($key)) {
+                $this->bindings[$key] = $value;
+            } else {
+                $paramName = "r_" . count($this->bindings);
+                $this->bindings[$paramName] = $value;
+            }
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Get the final generated SQL query string.
+     */
     public function getQuery(): string
     {
         return trim($this->queryResult);
     }
 
+    /**
+     * Get the number of affected or returned rows from the last execution.
+     */
     public function getNumRows(): int
     {
         return $this->numRows;
     }
 
+    /**
+     * Get the number of columns from the last statement execution.
+     */
     public function getNumCols(): int
     {
         return $this->numCols;
     }
 
+    /**
+     * Prepare, bind, and execute the query against the database.
+     */
     public function execute(string $operation = 'all')
     {
         $operation = strtolower($operation);
@@ -184,11 +257,29 @@ class Query
         }
     }
 
+    /**
+     * Execute an insert operation shortcut.
+     */
     public function add(): bool { return (bool)$this->execute('add'); }
+
+    /**
+     * Execute an update operation shortcut.
+     */
     public function edit(): bool { return (bool)$this->execute('update'); }
+
+    /**
+     * Execute a delete operation shortcut.
+     */
     public function remove(): bool { return (bool)$this->execute('delete'); }
+
+    /**
+     * Fetch all results as an array of objects.
+     */
     public function all(): array { return $this->execute('all'); }
     
+    /**
+     * Fetch a single result as an object.
+     */
     public function one(): ?object 
     { 
         $result = $this->execute('one');
@@ -196,12 +287,15 @@ class Query
     }
 
     /**
-     * Retorna um único valor escalar (ex: COUNT, SUM, AVG)
+     * Fetch a single scalar value (e.g., COUNT, SUM, AVG).
      */
     public function value()
     {
         return $this->execute('value');
     }
 
+    /**
+     * Check if any records match the query criteria.
+     */
     public function exists(): bool { return $this->execute('exists'); }
 }
