@@ -2,14 +2,20 @@
 
 **LiteTable** is a lightweight, high-performance database access library for PHP. It is built for developers who want the simplicity and speed of native `PDO` and objects without the heavy boilerplate and performance traps of traditional ORMs.
 
+> 📖 **[Official Documentation](https://lite-table.github.io/docs/)**
+
 ---
 
 ## 🚀 Why LiteTable?
 
-* **Zero Heavy Hydration:** Results are fetched directly as standard PHP objects (`PDO::FETCH_OBJ`). No complex mapping overhead.
-* **SQL First & Secure:** Full control over your queries using native prepared statements exclusively. Zero risk of SQL injection.
-* **Predictable & Fast:** No hidden magic, no automatic *change tracking*, and zero N+1 query surprises. What you write is exactly what gets executed.
-* **Modern & Clean:** Requires PHP 8.1+ with strict typing, clean object-oriented design, and modular architecture.
+- **Zero Heavy Hydration:** Results are fetched directly as standard PHP objects (`PDO::FETCH_OBJ`). No complex mapping overhead.
+
+- **SQL First & Secure:** Full control over your queries using native prepared statements exclusively. Zero risk of SQL injection.
+
+- **Predictable & Fast:** No hidden magic, no automatic *change tracking*, and zero N+1 query surprises. What you write is exactly what gets executed.
+
+- **Modern & Clean:** Requires PHP 8.1+ with strict typing, clean object-oriented design, and modular architecture.
+
 
 ---
 
@@ -87,25 +93,25 @@ When you need custom filters, joins, or aggregations, use the `Query` builder fo
 use LiteTable\Query;
 
 // Fetch multiple rows using fluent conditions
-$activeAdmins = Query::table('users', $db)
+$activeAdmins = Query::table('users',$db)
     ->select(['id', 'name', 'email'])
     ->where('status', '=', 'active')
     ->and('role', '=', 'admin')
     ->orderBy('name', 'ASC')
     ->all();
 
-foreach ($activeAdmins as $admin) {
+foreach ($activeAdmins as$admin) {
     echo $admin->name . "\n";
 }
 
 // Fetch a single row with IN clauses
-$singleUser = Query::table('users', $db)
+$singleUser = Query::table('users',$db)
     ->where('status', '=', 'active')
     ->andIn('id', [1, 2, 3])
     ->one();
 
 // Get scalar values (e.g., aggregations)
-$totalActive = Query::table('users', $db)
+$totalActive = Query::table('users',$db)
     ->select('COUNT(*)')
     ->where('status', '=', 'active')
     ->value();
@@ -117,3 +123,5 @@ $totalActive = Query::table('users', $db)
 ## 📄 License
 
 Open-source software licensed under the [MIT license](https://www.google.com/search?q=LICENSE).
+
+```
