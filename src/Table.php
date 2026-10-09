@@ -113,6 +113,41 @@ class Table
     }
 
     /**
+     * Insert multiple records in a single query.
+     */
+    public function insertBatch(array $rows): bool
+    {
+        if (empty($rows)) {
+            return false;
+        }
+
+        $tableName = $this->getTable();
+        $keys = array_keys(reset($rows));
+        $strKeys = implode(', ', $keys);
+        
+        $sqlValues = [];
+        $params = [];
+        $paramIndex = 0;
+
+        foreach ($rows as $row) {
+            $rowBinds = [];
+            foreach ($keys as $key) {
+                $paramName = "p_{$paramIndex}";
+                $rowBinds[] = ":{$paramName}";
+                $params[$paramName] = $row[$key] ?? null;
+                $paramIndex++;
+            }
+            $sqlValues[] = '(' . implode(', ', $rowBinds) . ')';
+        }
+
+        $strValues = implode(', ', $sqlValues);
+        $sql = "INSERT INTO {$tableName} ({$strKeys}) VALUES {$strValues};";
+
+        $stmt = $this->executeQuery($sql, $params);
+        return (bool)$stmt;
+    }
+
+    /**
      * Update an existing record by ID.
      */
     public function update(array $obj, int|string $id): bool
@@ -323,6 +358,32 @@ class Table
         
         $whereStr = implode(' AND ', $whereClauses);
         $sql = "DELETE FROM {$tableName} WHERE {$whereStr};";
+
+        $stmt = $this->executeQuery($sql, $params);
+        return (bool)$stmt;
+    }
+
+    /**
+     * Delete multiple records where primary key is in a given array.
+     */
+    public function deleteIn(array $ids): bool
+    {
+        if (empty($ids)) {
+            return false;
+        }
+
+        $tableName = $this->getTable();
+        $params = [];
+        $bindKeys = [];
+
+        foreach ($ids as $index => $id) {
+            $paramName = "id_{$index}";
+            $bindKeys[] = ":{$paramName}";
+            $params[$paramName] = $id;
+        }
+
+        $strBinds = implode(', ', $bindKeys);
+        $sql = "DELETE FROM {$tableName} WHERE {$this->primaryKey} IN ({$strBinds});";
 
         $stmt = $this->executeQuery($sql, $params);
         return (bool)$stmt;
