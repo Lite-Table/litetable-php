@@ -145,13 +145,84 @@ class Query
     }
 
     /**
-     * Append a custom raw statement string.
+     * Append an IN clause.
      */
-    public function statement(string $stmt): self
+    public function in(string $field, array $values, string $boolean = "WHERE"): self
     {
-        $this->queryResult .= " {$stmt} ";
+        if (empty($values)) {
+            $this->queryResult .= " {$boolean} 1 = 0 ";
+            return $this;
+        }
+
+        $paramKeys = [];
+        foreach ($values as $value) {
+            $paramName = "in_" . count($this->bindings);
+            $paramKeys[] = ":{$paramName}";
+            $this->bindings[$paramName] = $value;
+        }
+
+        $strBinds = implode(', ', $paramKeys);
+        $this->queryResult .= " {$boolean} {$field} IN ({$strBinds}) ";
         return $this;
     }
+
+    /**
+     * Append a NOT IN clause.
+     */
+    public function notIn(string $field, array $values, string $boolean = "WHERE"): self
+    {
+        if (empty($values)) {
+            $this->queryResult .= " {$boolean} 1 = 1 ";
+            return $this;
+        }
+
+        $paramKeys = [];
+        foreach ($values as $value) {
+            $paramName = "nin_" . count($this->bindings);
+            $paramKeys[] = ":{$paramName}";
+            $this->bindings[$paramName] = $value;
+        }
+
+        $strBinds = implode(', ', $paramKeys);
+        $this->queryResult .= " {$boolean} {$field} NOT IN ({$strBinds}) ";
+        return $this;
+    }
+
+    /**
+     * Append an IS NULL clause.
+     */
+    public function isNull(string $field, string $boolean = "WHERE"): self
+    {
+        $this->queryResult .= " {$boolean} {$field} IS NULL ";
+        return $this;
+    }
+
+    /**
+     * Append an IS NOT NULL clause.
+     */
+    public function isNotNull(string $field, string $boolean = "WHERE"): self
+    {
+        $this->queryResult .= " {$boolean} {$field} IS NOT NULL ";
+        return $this;
+    }
+
+    /**
+     * Append an AND IN clause.
+     */
+    public function andIn(string $field, array $values): self
+    {
+        return $this->in($field, $values, "AND");
+    }
+
+    /**
+     * Append an OR IN clause.
+     */
+    public function orIn(string $field, array $values): self
+    {
+        return $this->in($field, $values, "OR");
+    }
+
+    
 
     /**
      * Append a raw SQL fragment with optional secure bindings.
