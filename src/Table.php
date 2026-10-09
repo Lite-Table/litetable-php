@@ -20,7 +20,7 @@ class Table
     protected Database $db;
     protected ?string $tableName = null;
     protected string $primaryKey = 'id';
-    protected ?int $lastId = null;
+    protected ?int $lastInsertId = null;
     protected int $numRows = 0;
     protected int $numCols = 0;
 
@@ -55,14 +55,10 @@ class Table
     /**
      * Centralized method for query execution.
      */
-    protected function executeQuery(string $sql, array $params = [], bool $isTransaction = false)
+    protected function executeQuery(string $sql, array $params = [])
     {
         $pdo = $this->db->getPdo();
         try {
-            if ($isTransaction) {
-                $pdo->beginTransaction();
-            }
-
             $stmt = $pdo->prepare($sql);
             
             foreach ($params as $key => $value) {
@@ -82,15 +78,8 @@ class Table
             $this->numCols = $stmt->columnCount();
             $this->numRows = $stmt->rowCount();
 
-            if ($isTransaction) {
-                $pdo->commit();
-            }
-
             return $stmt;
         } catch (PDOException $e) {
-            if ($isTransaction && $pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
             throw new RuntimeException("Database Error: " . $e->getMessage(), (int)$e->getCode(), $e);
         }
     }
@@ -108,20 +97,17 @@ class Table
         $sql = "INSERT INTO {$tableName} ({$strKeys}) VALUES ({$strBinds});";
         
         $pdo = $this->db->getPdo();
-        $pdo->beginTransaction();
         
         try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($obj);
             
-            $this->lastId = (int)$pdo->lastInsertId();
+            $this->lastInsertId = (int)$pdo->lastInsertId();
             $this->numCols = $stmt->columnCount();
             $this->numRows = $stmt->rowCount();
 
-            $pdo->commit();
             return true;
         } catch (PDOException $e) {
-            $pdo->rollBack();
             throw new RuntimeException("Insert Error: " . $e->getMessage(), (int)$e->getCode(), $e);
         }
     }
@@ -147,7 +133,7 @@ class Table
                 SET {$setStr}
                 WHERE {$this->primaryKey} = :id;";
 
-        $stmt = $this->executeQuery($sql, $values, true);
+        $stmt = $this->executeQuery($sql, $values);
         return $stmt->rowCount() > 0 || $stmt->execute();
     }
 
@@ -178,7 +164,7 @@ class Table
                 SET {$setStr}
                 WHERE {$whereStr};";
 
-        $stmt = $this->executeQuery($sql, $params, true);
+        $stmt = $this->executeQuery($sql, $params);
         return (bool)$stmt;
     }
 
@@ -317,7 +303,7 @@ class Table
     {
         $tableName = $this->getTable();
         $sql = "DELETE FROM {$tableName} WHERE {$this->primaryKey} = :id;";
-        $stmt = $this->executeQuery($sql, [':id' => $id], true);
+        $stmt = $this->executeQuery($sql, [':id' => $id]);
         return (bool)$stmt;
     }
 
@@ -338,7 +324,7 @@ class Table
         $whereStr = implode(' AND ', $whereClauses);
         $sql = "DELETE FROM {$tableName} WHERE {$whereStr};";
 
-        $stmt = $this->executeQuery($sql, $params, true);
+        $stmt = $this->executeQuery($sql, $params);
         return (bool)$stmt;
     }
 
@@ -347,7 +333,7 @@ class Table
      */
     public function deleteByField(string $field, mixed $value): bool
     {
-        return $this->deleteWhere([$field => $value], 'AND');
+        return $this->deleteWhere([$field => $value]);
     }
 
     /**
@@ -405,7 +391,7 @@ class Table
         return (int)$stmt->fetchColumn();
     }
 
-    public function getLastId(): ?int { return $this->lastId; }
+    public function getLastInsertId(): ?int { return $this->lastInsertId; }
     public function getNumRows(): int { return $this->numRows; }
     public function getNumCols(): int { return $this->numCols; }
 }
