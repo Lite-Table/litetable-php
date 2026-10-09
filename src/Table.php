@@ -324,10 +324,9 @@ class Table
     /**
      * Delete records matching conditions.
      */
-    public function deleteWhere(array $conditions, string $operator = 'AND'): bool
+    public function deleteWhere(array $conditions): bool
     {
         $tableName = $this->getTable();
-        $operator = strtoupper($operator) === 'OR' ? 'OR' : 'AND';
         
         $whereClauses = [];
         $params = [];
@@ -336,7 +335,7 @@ class Table
             $params[$key] = $value;
         }
         
-        $whereStr = implode(" {$operator} ", $whereClauses);
+        $whereStr = implode(' AND ', $whereClauses);
         $sql = "DELETE FROM {$tableName} WHERE {$whereStr};";
 
         $stmt = $this->executeQuery($sql, $params, true);
@@ -377,9 +376,9 @@ class Table
     public function count(): int
     {
         $tableName = $this->getTable();
-        $sql = "SELECT COUNT(*) AS total FROM {$tableName};";
+        $sql = "SELECT COUNT(*) FROM {$tableName};";
         $stmt = $this->executeQuery($sql);
-        return (int)($stmt->fetch(PDO::FETCH_OBJ)->total ?? 0);
+        return (int)$stmt->fetchColumn();
     }
 
     /**
@@ -400,10 +399,10 @@ class Table
         }
 
         $whereSql = implode(' AND ', $clauses);
-        $sql = "SELECT COUNT(*) AS total FROM {$tableName} WHERE {$whereSql};";
+        $sql = "SELECT COUNT(*) FROM {$tableName} WHERE {$whereSql};";
         
         $stmt = $this->executeQuery($sql, $params);
-        return (int)($stmt->fetch(PDO::FETCH_OBJ)->total ?? 0);
+        return (int)$stmt->fetchColumn();
     }
 
     public function getLastId(): ?int { return $this->lastId; }
