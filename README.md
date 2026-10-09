@@ -6,13 +6,10 @@
 
 ## 🚀 Why LiteTable?
 
-- **Zero Heavy Hydration:** Results are fetched directly as standard PHP objects (`PDO::FETCH_OBJ`). No complex mapping overhead.
-
-- **SQL First & Secure:** Full control over your queries using native prepared statements exclusively. Zero risk of SQL injection.
-
-- **Predictable & Fast:** No hidden magic, no automatic *change tracking*, and zero N+1 query surprises. What you write is exactly what gets executed.
-
-- **Modern & Clean:** Requires PHP 8.1+ with strict typing, clean object-oriented design, and modular architecture.
+* **Zero Heavy Hydration:** Results are fetched directly as standard PHP objects (`PDO::FETCH_OBJ`). No complex mapping overhead.
+* **SQL First & Secure:** Full control over your queries using native prepared statements exclusively. Zero risk of SQL injection.
+* **Predictable & Fast:** No hidden magic, no automatic *change tracking*, and zero N+1 query surprises. What you write is exactly what gets executed.
+* **Modern & Clean:** Requires PHP 8.1+ with strict typing, clean object-oriented design, and modular architecture.
 
 ---
 
@@ -27,9 +24,7 @@ composer require litetable/litetable
 
 ---
 
-## 🛠️ Quick Start
-
-### 1. Establish a Database Connection
+## 🔌 1. Establish a Database Connection
 
 The `Database` class wraps `PDO` with secure defaults (exceptions enabled, emulated prepares disabled).
 
@@ -46,7 +41,7 @@ $db = new Database(
 
 ---
 
-### 2. Table (Quick CRUD & Batch Operations)
+## 📋 2. Table (Quick CRUD & Batch Operations)
 
 The `Table` class handles standard table operations instantly. You can use it fluently or extend it in your models.
 
@@ -66,9 +61,6 @@ $userId = $usersTable->getLastInsertId();
 // Find a record by primary key (returns an object or null)
 $user = $usersTable->find($userId);
 
-// Get all records from the table
-$allUsers = $usersTable->findAll();
-
 // Update a record by ID
 $usersTable->update([
     'name' => 'Johnathan Doe'
@@ -87,7 +79,7 @@ $usersTable->insertBatch([
 
 ---
 
-### 3. Query (Fluent Read-Only Builder)
+## 🔍 3. Query (Fluent Read-Only Builder)
 
 When you need custom filters, joins, or aggregations, use the `Query` builder for clean, expressive, and safe queries.
 
@@ -95,25 +87,25 @@ When you need custom filters, joins, or aggregations, use the `Query` builder fo
 use LiteTable\Query;
 
 // Fetch multiple rows using fluent conditions
-$activeAdmins = Query::table('users',$db)
+$activeAdmins = Query::table('users', $db)
     ->select(['id', 'name', 'email'])
     ->where('status', '=', 'active')
     ->and('role', '=', 'admin')
     ->orderBy('name', 'ASC')
     ->all();
 
-foreach ($activeAdmins as$admin) {
+foreach ($activeAdmins as $admin) {
     echo $admin->name . "\n";
 }
 
 // Fetch a single row with IN clauses
-$singleUser = Query::table('users',$db)
+$singleUser = Query::table('users', $db)
     ->where('status', '=', 'active')
     ->andIn('id', [1, 2, 3])
     ->one();
 
 // Get scalar values (e.g., aggregations)
-$totalActive = Query::table('users',$db)
+$totalActive = Query::table('users', $db)
     ->select('COUNT(*)')
     ->where('status', '=', 'active')
     ->value();
