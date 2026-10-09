@@ -468,6 +468,28 @@ class Table
         return (int)$stmt->fetchColumn();
     }
 
+    /**
+     * Get the first record ordered by primary key.
+     */
+    public function first(): ?object
+    {
+        $tableName = $this->getTable();
+        $sql = "SELECT * FROM {$tableName} ORDER BY {$this->primaryKey} ASC LIMIT 1;";
+        $stmt = $this->executeQuery($sql);
+        return $stmt->fetch(PDO::FETCH_OBJ) ?: null;
+    }
+
+    /**
+     * Get the last record ordered by primary key.
+     */
+    public function last(): ?object
+    {
+        $tableName = $this->getTable();
+        $sql = "SELECT * FROM {$tableName} ORDER BY {$this->primaryKey} DESC LIMIT 1;";
+        $stmt = $this->executeQuery($sql);
+        return $stmt->fetch(PDO::FETCH_OBJ) ?: null;
+    }
+
     public function getLastInsertId(): ?int { return $this->lastInsertId; }
     public function getNumRows(): int { return $this->numRows; }
     public function getNumCols(): int { return $this->numCols; }
