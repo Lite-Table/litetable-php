@@ -9,9 +9,6 @@ use PDOException;
 use RuntimeException;
 
 /**
- * @author Ortiz David
- * @copyright 2026
- * @version 2.7.0
  * @name Table
  * @desc Low-level, lightweight base table operations using native PDO without hidden magic columns.
  */
@@ -144,6 +141,25 @@ class Table
         $sql = "INSERT INTO {$tableName} ({$strKeys}) VALUES {$strValues};";
 
         $stmt = $this->executeQuery($sql, $params);
+        return (bool)$stmt;
+    }
+
+    /**
+     * Insert a record or replace an existing one (MySQL/SQLite).
+     */
+    public function replace(array $data): bool
+    {
+        $tableName = $this->getTable();
+        $keys = array_keys($data);
+        $strKeys = implode(', ', $keys);
+        $strBinds = implode(', ', array_map(fn($k) => ":{$k}", $keys));
+
+        $sql = "REPLACE INTO {$tableName} ({$strKeys}) VALUES ({$strBinds});";
+        
+        $pdo = $this->db->getPdo();
+        $stmt = $this->executeQuery($sql, $data);
+        
+        $this->lastInsertId = (int)$pdo->lastInsertId();
         return (bool)$stmt;
     }
 
