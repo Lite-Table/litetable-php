@@ -158,6 +158,16 @@ class Query
      */
     public function raw(string $sql, array $bindings = []): self
     {
+        $trimmedSql = strtoupper(trim($sql));
+        
+        // Bloqueia comandos de escrita ou modificação estrutural na classe de leitura
+        $forbiddenKeywords = ['INSERT ', 'UPDATE ', 'DELETE ', 'DROP ', 'ALTER ', 'TRUNCATE ', 'CREATE '];
+        foreach ($forbiddenKeywords as $keyword) {
+            if (str_starts_with($trimmedSql, $keyword) || str_contains($trimmedSql, "; " . trim($keyword))) {
+                throw new RuntimeException("LiteTable Query Error: Write operations are forbidden in Query::raw(). Use Table for modifications.");
+            }
+        }
+
         $this->queryResult .= " {$sql} ";
         
         foreach ($bindings as $key => $value) {
