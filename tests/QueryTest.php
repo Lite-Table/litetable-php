@@ -26,7 +26,8 @@ Test::describe('LiteTable Query Builder Tests', function () {
     $pdo->exec("INSERT INTO users (name, email, status) VALUES ('Charlie', 'charlie@test.com', 'active')");
 
     // 1. Test fluent query generation and execution (all())
-    $query = Query::table('users', $db)->select('*')->where('status', '=', 'active');
+    // Nota: Query::table já inicia com SELECT * FROM users, por isso podemos encadear o where diretamente
+    $query = Query::table('users', $db)->where('status', '=', 'active');
     Test::assertSqlContains('SELECT *', $query->getQuery());
     
     $results = $query->all();
@@ -35,23 +36,24 @@ Test::describe('LiteTable Query Builder Tests', function () {
     Test::ok('Fluent select and where clauses executed successfully');
 
     // 2. Test single result execution (one())
-    $user = Query::table('users', $db)->select('*')->where('name', '=', 'Bob')->one();
+    $user = Query::table('users', $db)->where('name', '=', 'Bob')->one();
     Test::assertObjectHasAttribute('email', $user);
     Test::assertEquals('bob@test.com', $user->email);
     Test::ok('Query one() retrieves a single object correctly');
 
     // 3. Test scalar execution (value())
-    $count = Query::table('users', $db)->select('COUNT(*)')->value();
+    // Aqui usamos new Query para sobrepor o select padrão com COUNT(*)
+    $count = (new Query($db))->select('COUNT(*)')->from('users')->value();
     Test::assertEquals(3, (int)$count, 'Query value() returns scalar aggregate correctly');
     Test::ok('Query scalar value execution passed');
 
     // 4. Test exists check
-    $exists = Query::table('users', $db)->from('users')->where('status', '=', 'inactive')->exists();
+    $exists = Query::table('users', $db)->where('status', '=', 'inactive')->exists();
     Test::assert($exists, 'Query exists() returns true when records match');
     Test::ok('Query exists check passed');
 
     // 5. Test IN clause
-    $inResults = Query::table('users', $db)->select('*')->in('name', ['Alice', 'Charlie'])->all();
+    $inResults = Query::table('users', $db)->in('name', ['Alice', 'Charlie'])->all();
     Test::assertCount(2, $inResults, 'Query IN clause filters correctly');
     Test::ok('Query IN clause execution passed');
 

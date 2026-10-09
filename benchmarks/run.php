@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/Benchmark.php';
 
 use LiteTable\Database;
 use LiteTable\Table;
@@ -34,7 +35,7 @@ $table = new Table($db);
 $table->table('products');
 
 // Pre-seed some initial data for lookup, update, delete, and query tests
-for ($j = 1; $j <= 500; $j++) {
+for ($j = 1; $j <= 1000; $j++) {
     $pdo->exec("INSERT INTO products (name, price, status) VALUES ('Pre-Product {$j}', " . (rand(10, 1000) + 0.99) . ", 'active')");
     $pdo->exec("INSERT INTO categories (product_id, category_name) VALUES ({$j}, 'Electronics')");
 }
@@ -50,26 +51,26 @@ Benchmark::measure('CRUD - Table Insert Performance', function ($i) use ($table)
         'price' => rand(10, 1000) + 0.99,
         'status' => 'active'
     ]);
-}, 1000);
+}, 5000);
 
 // Benchmark 1.2: Find (Table::find)
 Benchmark::measure('CRUD - Table Find Performance', function ($i) use ($table) {
-    $randomId = rand(1, 400);
+    $randomId = rand(1, 800);
     $table->table('products')->find($randomId);
-}, 2000);
+}, 10000);
 
 // Benchmark 1.3: Update (Table::update)
 Benchmark::measure('CRUD - Table Update Performance', function ($i) use ($table) {
-    $randomId = rand(1, 400);
+    $randomId = rand(1, 800);
     $table->table('products')->update(['price' => 199.99], $randomId);
-}, 1000);
+}, 5000);
 
 // Benchmark 1.4: Delete (Table::delete)
 Benchmark::measure('CRUD - Table Delete Performance', function ($i) use ($table) {
     // Delete items from the upper range to avoid missing rows during lookups
-    $targetId = 401 + ($i % 100);
+    $targetId = 801 + ($i % 200);
     $table->table('products')->delete($targetId);
-}, 100);
+}, 500);
 
 
 // ==========================================
@@ -78,35 +79,37 @@ Benchmark::measure('CRUD - Table Delete Performance', function ($i) use ($table)
 
 // Benchmark 2.1: Complex Select with JOIN, OrderBy, and Limit
 Benchmark::measure('Query Builder - Complex Select with JOIN', function ($i) use ($db) {
-    Query::table('products', $db)
+    (new Query($db))
         ->select('products.name, categories.category_name, products.price')
+        ->from('products')
         ->join('categories', 'products.id = categories.product_id', 'INNER')
         ->where('products.price', '>', 500.0)
         ->orderBy('products.price', 'DESC')
-        ->limit(0, 10)
+        ->limit(10, 0)
         ->all();
-}, 1000);
+}, 3000);
 
 // Benchmark 2.2: IN Clause filtering
 Benchmark::measure('Query Builder - IN Clause Performance', function ($i) use ($db) {
-    Query::table('products', $db)
+    (new Query($db))
         ->select('*')
+        ->from('products')
         ->in('id', [10, 20, 30, 40, 50])
         ->all();
-}, 1500);
+}, 5000);
 
 // Benchmark 2.3: Exists check performance
 Benchmark::measure('Query Builder - Exists Check Performance', function ($i) use ($db) {
     Query::table('products', $db)
-        ->from('products')
         ->where('status', '=', 'active')
         ->exists();
-}, 2000);
+}, 5000);
 
 // Benchmark 2.4: Safe Raw SQL fragment performance
 Benchmark::measure('Query Builder - Safe Raw SQL Performance', function ($i) use ($db) {
-    Query::table('products', $db)
+    (new Query($db))
         ->select('id, name')
+        ->from('products')
         ->raw('WHERE price < ? AND status = ?', [200.0, 'active'])
         ->all();
-}, 1500);
+}, 3000);

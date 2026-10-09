@@ -20,7 +20,9 @@ trait TableCountTrait
         $sql = "SELECT 1 FROM {$tableName} WHERE {$whereStr} LIMIT 1;";
         
         $stmt = $this->executeQuery($sql, $params);
-        return $stmt->rowCount() > 0;
+        $result = $stmt->fetch();
+        
+        return $result !== false && $result !== null;
     }
 
     public function count(): int

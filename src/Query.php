@@ -40,9 +40,9 @@ class Query
     public static function table(string $table, Database $db): self
     {
         $instance = new self($db);
-        return $instance->from($table);
+        return $instance->select("*")->from($table);
     }
-
+    
     /**
      * Append a SELECT clause to the query.
      */
@@ -222,8 +222,6 @@ class Query
         return $this->in($field, $values, "OR");
     }
 
-    
-
     /**
      * Append a raw SQL fragment with optional secure bindings.
      */
@@ -231,7 +229,7 @@ class Query
     {
         $trimmedSql = strtoupper(trim($sql));
         
-        // Bloqueia comandos de escrita ou modificação estrutural na classe de leitura
+        // Block write or structural modification commands in the read query class
         $forbiddenKeywords = ['INSERT ', 'UPDATE ', 'DELETE ', 'DROP ', 'ALTER ', 'TRUNCATE ', 'CREATE '];
         foreach ($forbiddenKeywords as $keyword) {
             if (str_starts_with($trimmedSql, $keyword) || str_contains($trimmedSql, "; " . trim($keyword))) {
@@ -239,20 +237,25 @@ class Query
             }
         }
 
-        $this->queryResult .= " {$sql} ";
-        
+        // Handle positional (?) versus named parameters efficiently
         foreach ($bindings as $key => $value) {
             if (is_string($key)) {
-                $this->bindings[$key] = $value;
+                $this->bindings[ltrim($key, ':')] = $value;
             } else {
                 $paramName = "r_" . count($this->bindings);
+                $pos = strpos($sql, '?');
+                if ($pos !== false) {
+                    $sql = substr_replace($sql, ":{$paramName}", $pos, 1);
+                }
                 $this->bindings[$paramName] = $value;
             }
         }
+
+        $this->queryResult .= " {$sql} ";
         
         return $this;
     }
-
+ 
     /**
      * Get the final generated SQL query string.
      */
@@ -318,7 +321,8 @@ class Query
                     $result = $stmt->fetchColumn();
                     return $result !== false ? $result : null;
                 case 'exists':
-                    return ($this->numRows > 0);
+                    $result = $stmt->fetch();
+                    return $result !== false && $result !== null;
                 default:
                     $results = $stmt->fetchAll();
                     return $results ? array_map(fn($row) => (object)$row, $results) : [];

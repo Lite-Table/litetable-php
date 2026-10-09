@@ -13,15 +13,16 @@ install:
 	composer install
 
 test:
-	@bash scripts/test.sh
+	@php tests/run.php
 
 benchmark:
-	@bash scripts/benchmark.sh
+	@php benchmarks/run.php
 
 lint:
 	@bash scripts/lint.sh
 
 vuln-check:
+	composer install --no-interaction
 	@bash scripts/vuln-check.sh
 
 clean:
